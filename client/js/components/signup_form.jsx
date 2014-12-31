@@ -1,5 +1,6 @@
 var React = require("react");
 var _ = require("lodash");
+var $ = require("jquery");
 
 var SignupForm = React.createClass({
   getInitialState: function() {
@@ -314,10 +315,21 @@ var SignupForm = React.createClass({
 
   handleSubmit: function(event) {
     event.preventDefault();
-    //send getFormData to database; callback will set this.state.submitted to true and if successful and render user
-    //dash or callback will keep this.state.submitted at false and render error message
-    console.log("getFormdata", this.getFormData());
+    var userData = this.getFormData();
+    $.ajax({
+      url: "/user/signup",
+      type:"POST",
+      dataType: "json",
+      data: userData,
+      success: function(data) {
+        console.log("success: next step, save userData to state in the store");
+        },
+      error: function(error) {
+        console.error(error);
+        }
+    });
   },
+  
 
   getFormData: function() {
     var data = {};
@@ -332,48 +344,63 @@ var SignupForm = React.createClass({
   render: function() {
     return (
       <div>
-        <form className="SignupForm" onSubmit={this.handleSubmit}>
-          Username*: <input type="text" ref="username"/>
-        <br />
-          Password*: <input type="password" ref="password"/>
-        <br />
-          Email*: <input type="email" ref="email" />
-        <br />
-          Country*: <select defaultValue="US" ref="country">
+        <form className="signup-form" onSubmit={this.handleSubmit}>
+          <div className="form-username">
+            <p className="form-label">Username*: </p>
+            <input className="form-input-field" type="text" ref="username"/>
+          </div>
+
+          <div className="form-password">
+            <p className="form-label">Password*: </p>
+            <input className="form-input-field" type="password" ref="password"/>
+          </div>
+
+          <div className="form-email">
+            <p className="form-label">Email*: </p>
+            <input className="form-input-field" type="email" ref="email" />
+          </div>
+
+          <div className="form-country">
+            <p className="form-label">Country*: </p>
+            <select defaultValue="US" ref="country">
                       {_.map(this.state.countries, function(countryTuple){
-                          return <option value={countryTuple[0]}>{countryTuple[1]}</option>;
+                        return <option value={countryTuple[0]}>{countryTuple[1]}</option>;
                       })}
-                    </select>
-        <br />
-          State: <select ref="state">
+            </select>
+          </div>
+
+          <div className="form-state">
+            <p className="form-label">State: </p>
+            <select ref="state">
                    {_.map(this.state.states, function(stateTuple){
-                      return <option value={stateTuple[0]}>{stateTuple[1]}</option>;
+                     return <option value={stateTuple[0]}>{stateTuple[1]}</option>;
                    })}
-                 </select>
-        <br />
-          Age:  <select ref="age">
-                  {_.map(_.range(18,101), function(age) {
-                    return <option value={age}>{age}</option>;
-                  })}
-                </select>
-        <br />
-          Gender: <select ref="gender">
-                    <option value="f">female</option>
-                    <option value="m">male</option>
-                    <option value="o">other</option>
-                  </select>
-        <br />
-          <input type="submit" value="Signup"/>
-        <br />
+            </select>
+          </div>
+
+          <div className="age">
+            <p className="form-label">Age: </p>
+            <select ref="age">
+              {_.map(_.range(18,101), function(age) {
+                return <option value={age}>{age}</option>;
+              })}
+            </select>
+          </div>
+
+          <div className="gender">
+            <p className="form-label">Gender: </p>
+            <select ref="gender">
+              <option value="f">female</option>
+              <option value="m">male</option>
+              <option value="o">other</option>
+            </select>
+          </div>
+
+          <input className="form-submit-button" type="submit" value="Signup"/>
         </form>
       </div>
      );
   }
 });
-
-React.render(
-  <SignupForm />,
-  document.getElementById("content")
-);
 
 module.exports = SignupForm;
