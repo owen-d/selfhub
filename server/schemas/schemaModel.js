@@ -49,5 +49,23 @@ module.exports = {
         helpers.errorHandler(error, request, response, next);
         return;
       });
+  },
+
+  findSchema: function(request, response, headers) {
+    var error;
+    headers = {};
+    Model.findOneAsync(headers)
+      .then(function(schema) {
+        if (schema) {
+          console.log(schema);
+          return schema;
+        } else {
+          return false;
+        }
+      })
+      .catch(function(error) {
+        helpers.errorLogger(error);
+        helpers.errorHandler(error, request, response, next);
+      })
   }
 };
