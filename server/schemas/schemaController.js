@@ -1,6 +1,7 @@
 var Busboy = require("busboy");
 var helpers = require("../config/helpers");
 var s3Cache = require("../db/s3Cache");
+var schemaVerify = require("./schemaVerification");
 
 /**
  * Validate an entry conforms to a schema.
@@ -37,6 +38,7 @@ module.exports = {
     var userID = request.params.userID;
     var busboy = new Busboy({headers: request.headers});
     busboy.on("file", function(fieldname, file, filename, encoding, mimetype) {
+      // console.log('busboy hit file, arguments:', arguments);
       if (!filename) { return; }
       file.fileRead = [];
       file.on("data", function(data) {
@@ -44,19 +46,24 @@ module.exports = {
       });
       file.on("end", function() {
         var buffer = Buffer.concat(this.fileRead);
-        validateEntry(schemaName, buffer, function(error, isValid) {
-          if (error) {
-            console.error("error validating entry:", error);
-          } else if (isValid) {
-            s3Cache.createEntry(schemaName, userID, buffer, function(error) {
-              if (error) {
-                console.error("error uploading entry:", error);
-              } else {
-                console.log("successfully created", filename);
-              }
-            });
-          }
-        });
+        //log buffer & send to csvparser.
+        if (mimetype === "text/csv") {
+          schemaVerify.handle(request, response, buffer);
+        }
+          
+        // validateEntry(schemaName, buffer, function(error, isValid) {
+        //   if (error) {
+        //     console.error("error validating entry:", error);
+        //   } else if (isValid) {
+        //     s3Cache.createEntry(schemaName, userID, buffer, function(error) {
+        //       if (error) {
+        //         console.error("error uploading entry:", error);
+        //       } else {
+        //         console.log("successfully created", filename);
+        //       }
+        //     });
+        //   }
+        // });
       });
       file.on("error", function(error) {
         console.error("error while buffering the stream: ", error);

@@ -1,10 +1,11 @@
 var csv = require('csv');
 var parser = csv.parse();
 var stringifier = csv.stringify();
+var transform = csv.transform;
 var columns = [];
 var Readable = require('stream').Readable;
 
-var handle = function(request, response, next) {
+var handle = function(request, response, buffer) {
   columns = [];
   var Readable = require('stream').Readable;
 
@@ -12,7 +13,8 @@ var handle = function(request, response, next) {
 
   rs._read = function(){
     var l = 0;
-    var data = JSON.stringify(Object.keys(request.body)[0]);
+    var data = buffer;
+    // var data = JSON.stringify(Object.keys(request.body)[0]);
     rs.push(data);
     if (l = data.length) {
       rs.push('\n');
@@ -20,7 +22,16 @@ var handle = function(request, response, next) {
     }
   };
 
-  rs.pipe(parser).pipe(stringifier).pipe(response);
+  var transformify = function(data, callback) {
+    if (Array.isArray(data)) {
+      data.push("appended!");
+    }
+    callback(null, data);
+  };
+  var transformer = transform(transformify);
+
+
+  rs.pipe(parser).pipe(transformer).pipe(stringifier).pipe(response);
     
 };
 
@@ -34,19 +45,19 @@ var handle = function(request, response, next) {
 
 
 
-process.stdin.setEncoding('utf8');
-process.stdin.on('data', function(data) {
-  parser.write(data);
-});
+// process.stdin.setEncoding('utf8');
+// process.stdin.on('data', function(data) {
+//   parser.write(data);
+// });
 
-parser.on('readable', function(){
-  while(data = parser.read()){
-    if (!columns.length) {
-      columns.push(data);
-    }
-    stringifier.write(data);
-  }
-});
+// parser.on('readable', function(){
+//   while(data = parser.read()){
+//     if (!columns.length) {
+//       columns.push(data);
+//     }
+//     stringifier.write(data);
+//   }
+// });
 
 
 //BOTH OF THESE WORK with cat <file> | node <thisFile>
