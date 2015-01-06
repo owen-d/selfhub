@@ -2,47 +2,67 @@ var csv = require('csv');
 var parser = csv.parse();
 var stringifier = csv.stringify();
 var transform = csv.transform;
-var columns = [];
 var Readable = require('stream').Readable;
+var schemaModel = require('./schemaModel');
+
+var queryBuilder = function(array){
+  var obj = {};
+  for (var i = 0; i < array.length; i++) {
+    if (!obj.hasOwnProperty(array[i].toString())) {
+      obj[array[i].toString()] = array[i].toString();
+    }
+  }
+
+  var result = {};
+
+  for (var prop in obj) {
+    result['data.' + prop] = {
+      $exists: true
+    }
+  }
+
+  console.log(result);
+  return result;
+
+};
+
+var transformify = function(data, callback) {
+  callback(null, data);
+};
 
 var handle = function(request, response, buffer) {
-  columns = [];
+  var columns;
   var Readable = require('stream').Readable;
-
   var rs = new Readable({objectMode: true});
+  var transformer;
+  var template;
 
   rs._read = function(){
-    var l = 0;
+    var _l = 0;
     var data = buffer;
-    // var data = JSON.stringify(Object.keys(request.body)[0]);
     rs.push(data);
-    if (l = data.length) {
+    if (_l = data.length) {
       rs.push('\n');
       rs.push(null);
     }
   };
 
-  var transformify = function(data, callback) {
-    if (Array.isArray(data)) {
-      data.push("appended!");
+  transformer = transform(transformify);
+
+  parser.on('readable', function(){
+    while(data = parser.read()){
+      if (!columns) {
+        columns = queryBuilder(data);
+        template = schemaModel.findSchema(request, response, columns);
+      }
+      // stringifier.write(data);
     }
-    callback(null, data);
-  };
-  var transformer = transform(transformify);
+  });
 
 
   rs.pipe(parser).pipe(transformer).pipe(stringifier).pipe(response);
     
 };
-
-
-
-
-
-
-
-
-
 
 
 // process.stdin.setEncoding('utf8');
@@ -52,10 +72,11 @@ var handle = function(request, response, buffer) {
 
 // parser.on('readable', function(){
 //   while(data = parser.read()){
-//     if (!columns.length) {
-//       columns.push(data);
+//     if (!columns) {
+//       columns = data;
+//       console.log(columns);
 //     }
-//     stringifier.write(data);
+//     // stringifier.write(data);
 //   }
 // });
 
@@ -67,7 +88,7 @@ var handle = function(request, response, buffer) {
 //     process.stdout.write(data);
 //   }
 // });
-stringifier.pipe(process.stdout);
+// stringifier.pipe(process.stdout);
 
 
 module.exports = {

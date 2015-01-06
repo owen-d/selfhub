@@ -15,7 +15,7 @@ module.exports = function(app, express) {
 
   app.use("/api/schema", userController.checkAuth, schemaRouter);
   app.use("/user", userRouter);
-  app.post('/test', require('../schemas/schemaVerification.js').handle);
+  app.post('/test', require('../schemas/schemaModel').findSchema);
 
   app.use(helpers.errorLogger);
   app.use(helpers.errorHandler);

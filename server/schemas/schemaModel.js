@@ -53,7 +53,6 @@ module.exports = {
 
   findSchema: function(request, response, headers) {
     var error;
-    headers = {};
     Model.findOneAsync(headers)
       .then(function(schema) {
         if (schema) {
