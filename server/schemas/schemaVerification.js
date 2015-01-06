@@ -8,7 +8,7 @@ var schemaModel = require('./schemaModel');
 var queryBuilder = function(array){
   var obj = {};
   for (var i = 0; i < array.length; i++) {
-    if (!obj.hasOwnProperty(array[i].toString())) {
+    if (!obj.hasOwnProperty(array[i].toString()) && array[i].length) {
       obj[array[i].toString()] = array[i].toString();
     }
   }
@@ -21,7 +21,6 @@ var queryBuilder = function(array){
     }
   }
 
-  console.log(result);
   return result;
 
 };

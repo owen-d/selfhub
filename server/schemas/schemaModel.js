@@ -51,9 +51,9 @@ module.exports = {
       });
   },
 
-  findSchema: function(request, response, headers) {
+  findSchema: function(request, response, query) {
     var error;
-    Model.findOneAsync(headers)
+    Model.findOneAsync(query)
       .then(function(schema) {
         if (schema) {
           console.log(schema);
@@ -63,6 +63,7 @@ module.exports = {
         }
       })
       .catch(function(error) {
+        console.log('hit error', error);
         helpers.errorLogger(error);
         helpers.errorHandler(error, request, response, next);
       })

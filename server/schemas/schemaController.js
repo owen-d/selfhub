@@ -72,9 +72,9 @@ module.exports = {
     busboy.on("field", function() {
       helpers.handleBadRequest(response, "field uploads not yet supported");
     });
-    busboy.on("finish", function() {
-      helpers.endFormParse(response);
-    });
+    // busboy.on("finish", function() {
+    //   helpers.endFormParse(response);
+    // });
     request.pipe(busboy);
   },
 
