@@ -1,9 +1,11 @@
 var csv = require('csv');
 var parser = csv.parse();
-var stringifier = csv.stringify();
-var transform = csv.transform;
 var Readable = require('stream').Readable;
 var schemaModel = require('./schemaModel');
+var Duplex = require('stream').Duplex;
+var helpers = require('../config/helpers');
+var stringifier = csv.stringify();
+var transform = csv.transform;
 
 var queryBuilder = function(array){
   var obj = {};
@@ -12,29 +14,20 @@ var queryBuilder = function(array){
       obj[array[i].toString()] = array[i].toString();
     }
   }
-
   var result = {};
-
   for (var prop in obj) {
     result['data.' + prop] = {
       $exists: true
     }
   }
-
   return result;
-
-};
-
-var transformify = function(data, callback) {
-  callback(null, data);
 };
 
 var handle = function(request, response, buffer) {
   var columns;
-  var Readable = require('stream').Readable;
   var rs = new Readable({objectMode: true});
   var transformer;
-  var template;
+  var storage = {};
 
   rs._read = function(){
     var _l = 0;
@@ -46,49 +39,33 @@ var handle = function(request, response, buffer) {
     }
   };
 
-  transformer = transform(transformify);
+  transformer = transform(function(data, variable){
+    return data;
+  });
 
   parser.on('readable', function(){
-    while(data = parser.read()){
       if (!columns) {
-        columns = queryBuilder(data);
-        template = schemaModel.findSchema(request, response, columns);
+        columns = queryBuilder(parser.read());
+        schemaModel.findSchema(columns, this, storage);
       }
-      // stringifier.write(data);
-    }
+  });
+
+  parser.once('templated', function(){
+    console.log('templated hit, ', storage.template);
+    this.pipe(transformer);
+  });
+
+  parser.on('noTemplate', function(){
+    var error = {message: "Failed to find a matching template"};
+    this.end();
+    console.log(error.message);
+    helpers.errorHandler(error, request, response);
   });
 
 
-  rs.pipe(parser).pipe(transformer).pipe(stringifier).pipe(response);
+  rs.pipe(parser);
     
 };
-
-
-// process.stdin.setEncoding('utf8');
-// process.stdin.on('data', function(data) {
-//   parser.write(data);
-// });
-
-// parser.on('readable', function(){
-//   while(data = parser.read()){
-//     if (!columns) {
-//       columns = data;
-//       console.log(columns);
-//     }
-//     // stringifier.write(data);
-//   }
-// });
-
-
-//BOTH OF THESE WORK with cat <file> | node <thisFile>
-
-// stringifier.on('readable', function(){
-//   while(data = stringifier.read()){
-//     process.stdout.write(data);
-//   }
-// });
-// stringifier.pipe(process.stdout);
-
 
 module.exports = {
   handle: handle

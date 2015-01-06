@@ -51,21 +51,21 @@ module.exports = {
       });
   },
 
-  findSchema: function(request, response, query) {
+  findSchema: function(query, stream, storage) {
     var error;
     Model.findOneAsync(query)
       .then(function(schema) {
         if (schema) {
-          console.log(schema);
-          return schema;
+          // console.log(schema);
+          storage.template = schema;
+          stream.emit('templated');
         } else {
-          return false;
+          // storage.template = false;
+          stream.emit('noTemplate');
         }
       })
       .catch(function(error) {
         console.log('hit error', error);
-        helpers.errorLogger(error);
-        helpers.errorHandler(error, request, response, next);
       })
   }
 };
